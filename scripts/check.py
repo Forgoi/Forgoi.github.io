@@ -51,7 +51,9 @@ def main():
         assert doc.lang=='zh-CN',f'{rel}: language missing'
         assert doc.title and doc.description and doc.main,f'{rel}: required metadata/landmarks missing'
         assert not doc.errors,f'{rel}: {doc.errors}'
-        assert all(not r.startswith(('http:','https:','//')) for r in doc.resources),f'{rel}: external runtime resource'
+        external = [r for r in doc.resources if r.startswith(('http:','https:','//'))]
+        expected = ['https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js'] if 'busuanzi_value_page_pv' in doc.ids else []
+        assert external == expected, f'{rel}: unexpected external runtime resource'
         for ref in doc.refs:
             parts=urlsplit(ref)
             if parts.scheme or parts.netloc:continue
@@ -73,6 +75,6 @@ def main():
     assert (ROOT/'.nojekyll').exists()
     assert not (ROOT/'2023').exists() and not (ROOT/'2024').exists(),'Retired posts still present'
     assert (ROOT/'downloads/FixedStepProbe.cs').read_bytes()==(ROOT/'blog-src/downloads/FixedStepProbe.cs').read_bytes()
-    print(f'PASS: {len(documents)} HTML pages; {checked} local references/anchors; XML feeds; no third-party runtime resources; source download; deterministic {len(after)}-file rebuild.')
+    print(f'PASS: {len(documents)} HTML pages; {checked} local references/anchors; XML feeds; only approved article-view runtime; source download; deterministic {len(after)}-file rebuild.')
 
 if __name__=='__main__':main()

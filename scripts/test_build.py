@@ -62,4 +62,33 @@ class BlogContentTests(unittest.TestCase):
         self.assertIn('基础已学，Query 待学', content)
         self.assertNotIn('ECS 系列刚开始阅读', content)
 
+class FeatureTests(unittest.TestCase):
+    def test_article_only_counter_and_donations(self):
+        from unittest.mock import patch
+        for post in build.SITE['posts']:
+            with patch.object(build, 'write') as write:
+                build.article(post)
+            html = write.call_args.args[1]
+            self.assertEqual(html.count('id="busuanzi_value_page_pv"'), 1)
+            self.assertIn('id="article-views" hidden', html)
+            self.assertIn('https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js', html)
+            self.assertIn('<details class="donation-panel"', html)
+            self.assertIn('微信收款二维码', html)
+            self.assertIn('支付宝收款二维码', html)
+            self.assertNotIn('giscus', html)
+        html = build.page('Index', 'Test')
+        self.assertNotIn('busuanzi', html)
+        self.assertNotIn('donation-panel', html)
+
+    def test_original_qr_bytes(self):
+        import hashlib
+        expected = {
+            'donation-wechat.png': '2d44408e40896d65e43554a0cf04959030731c1e88d8f26eb7131c548ffff5bb',
+            'donation-alipay.jpg': 'c9a44a09167e127a2287bf34f55800171e5f5d1b9349f6b7079b77be4fa2ff69',
+        }
+        for name, digest in expected.items():
+            source = (build.SOURCE / 'static' / name).read_bytes()
+            self.assertEqual(hashlib.sha256(source).hexdigest(), digest)
+            self.assertEqual(source, (build.ROOT / 'assets' / name).read_bytes())
+
 if __name__=='__main__':unittest.main()

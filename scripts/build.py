@@ -134,7 +134,10 @@ def markdown(text):
 def write(path, content):
     dest = ROOT / path
     dest.parent.mkdir(parents=True, exist_ok=True)
-    dest.write_text(content, encoding='utf-8')
+    if isinstance(content, bytes):
+        dest.write_bytes(content)
+    else:
+        dest.write_text(content, encoding='utf-8')
     GENERATED.append(path)
 
 
@@ -155,6 +158,7 @@ def page(title, body, path='/', active='', description=None, article=None):
     if article:
         schema.update({'headline':title,'datePublished':article['date'],'author':{'@type':'Person','name':'Forgoi'},'description':description})
     schema_json = json.dumps(schema, ensure_ascii=False).replace('<', '\\u003c')
+    counter_script = '<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>' if article else ''
     return f'''<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -166,7 +170,7 @@ def page(title, body, path='/', active='', description=None, article=None):
 <meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:title" content="{esc(full_title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{esc(BASE+path)}"><meta property="og:locale" content="zh_CN">
 <link rel="stylesheet" href="/assets/style.css?v={CSS_REV}"><script src="/assets/site.js?v={JS_REV}" defer></script>
 <script type="application/ld+json">{schema_json}</script>
-</head><body>{header(active)}<main class="wrap" id="main">{body}</main>{footer()}</body></html>
+</head><body>{header(active)}<main class="wrap" id="main">{body}</main>{footer()}{counter_script}</body></html>
 '''
 
 
@@ -221,11 +225,15 @@ def toc_markup(headings):
     return '<ol class="toc">' + ''.join(f'<li><a href="#{anchor}">{esc(re.sub(r"[`*]", "", label))}</a></li>' for level,label,anchor in headings if level == 2) + '</ol>'
 
 
+def support_panel():
+    return '''<section class="article-support" aria-label="赞赏作者"><p>如果这篇记录对你有帮助，可以自愿赞赏支持。</p><details class="donation-panel" id="donation-panel"><summary>赞赏</summary><div class="donation-content"><p class="donation-note">选择微信或支付宝扫码，金额自定。付款前请在支付应用中核对收款人。</p><div class="donation-codes"><figure><figcaption>微信</figcaption><a href="/assets/donation-wechat.png" aria-label="查看微信收款码原图"><img src="/assets/donation-wechat.png" width="1280" height="1745" alt="微信收款二维码" loading="lazy" decoding="async"></a><a class="qr-original" href="/assets/donation-wechat.png" download>保存微信原图</a></figure><figure><figcaption>支付宝</figcaption><a href="/assets/donation-alipay.jpg" aria-label="查看支付宝收款码原图"><img src="/assets/donation-alipay.jpg" width="1170" height="1755" alt="支付宝收款二维码" loading="lazy" decoding="async"></a><a class="qr-original" href="/assets/donation-alipay.jpg" download>保存支付宝原图</a></figure></div><p class="donation-note">手机上可保存原图，再使用对应支付应用的相册识码功能。本站仅展示收款码，不处理付款，也不确认到账。</p><button class="donation-close" type="button" hidden>收起收款码</button></div></details></section>'''
+
+
 def article(post):
     rendered, headings = markdown((SOURCE/'posts'/post['file']).read_text(encoding='utf-8'))
     toc = toc_markup(headings)
     notice = '' if post['status'] == 'completed' else '<div class="reading-notice"><strong>阅读进行中</strong><span>这篇记录的是当前阅读与待验证的问题，还不是已完成的实验结论。</span></div>'
-    body = f'''<header class="page-head"><a class="eyebrow" href="/archives/">← UNITY / LEARNING NOTES</a><h1>{esc(post['title'])}</h1><p>{esc(post['excerpt'])}</p>{meta(post)}</header><div class="article-layout"><article class="article-body" aria-label="文章正文"><details class="mobile-toc"><summary>本篇目录</summary>{toc}</details>{notice}{rendered}<div class="article-end"><a href="/archives/">← 所有文章</a><a href="/learning/">下一站：ECS 学习路线 <svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></a></div></article><aside class="article-aside" aria-label="文章目录"><p class="aside-heading">ON THIS PAGE / 本篇目录</p>{toc}<div class="aside-note"><strong>把结论放回条件里。</strong>实测、推演与计划分开记录。<br>看见现象，也说明它的边界。</div><div class="aside-note">{tags(post)}</div></aside></div>'''
+    body = f'''<header class="page-head"><a class="eyebrow" href="/archives/">← UNITY / LEARNING NOTES</a><h1>{esc(post['title'])}</h1><p>{esc(post['excerpt'])}</p>{meta(post)}<div class="article-views" id="article-views" hidden><span id="busuanzi_container_page_pv" style="display:none">浏览 <span id="busuanzi_value_page_pv"></span> 次</span><small>由不蒜子提供</small></div></header><div class="article-layout"><article class="article-body" aria-label="文章正文"><details class="mobile-toc"><summary>本篇目录</summary>{toc}</details>{notice}{rendered}{support_panel()}<div class="article-end"><a href="/archives/">← 所有文章</a><a href="/learning/">下一站：ECS 学习路线 <svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></a></div></article><aside class="article-aside" aria-label="文章目录"><p class="aside-heading">ON THIS PAGE / 本篇目录</p>{toc}<div class="aside-note"><strong>把结论放回条件里。</strong>实测、推演与计划分开记录。<br>看见现象，也说明它的边界。</div><div class="aside-note">{tags(post)}</div></aside></div>'''
     write(post['permalink'].strip('/')+'/index.html',page(post['title'],body,post['permalink'],'archives',post['excerpt'],post))
 
 
@@ -282,7 +290,7 @@ def main():
         if (SOURCE/'posts').resolve() not in source_path.parents:
             raise ValueError('Post source must remain inside blog-src/posts')
     for source in sorted((SOURCE/'static').iterdir()):
-        write('assets/'+source.name,source.read_text(encoding='utf-8'))
+        write('assets/'+source.name,source.read_bytes())
     download_dir = SOURCE/'downloads'
     if download_dir.exists():
         for source in sorted(download_dir.iterdir()):
@@ -296,7 +304,7 @@ def main():
     support_pages()
     feeds(posts)
     previous.write_text(json.dumps(sorted(GENERATED),ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
-    print(f'Built {len(posts)} article(s), {len(GENERATED)} files. No external dependencies.')
+    print(f'Built {len(posts)} article(s), {len(GENERATED)} files. No build-time external dependencies.')
 
 if __name__ == '__main__':
     main()

@@ -28,3 +28,33 @@ if (search) {
     empty.hidden = visible !== 0;
   });
 }
+
+// A missing/blocked counter stays hidden. Never substitute a fabricated count.
+const viewCount = document.querySelector('#busuanzi_value_page_pv');
+const views = document.querySelector('#article-views');
+if (viewCount && views) {
+  const updateViews = () => {
+    views.hidden = !/^\d+$/.test(viewCount.textContent.trim());
+  };
+  new MutationObserver(updateViews).observe(viewCount, {childList: true, characterData: true, subtree: true});
+  updateViews();
+}
+// Native details works without JavaScript; enhancement adds Escape and close.
+const donation = document.querySelector('#donation-panel');
+if (donation) {
+  const close = donation.querySelector('.donation-close');
+  const summary = donation.querySelector('summary');
+  const dismiss = () => {
+    donation.open = false;
+    summary.focus({preventScroll: true});
+    summary.scrollIntoView({block: 'nearest'});
+  };
+  close.hidden = false;
+  close.addEventListener('click', dismiss);
+  donation.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && donation.open) {
+      event.preventDefault();
+      dismiss();
+    }
+  });
+}
