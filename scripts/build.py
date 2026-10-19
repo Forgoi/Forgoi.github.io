@@ -7,6 +7,7 @@ No network, timestamps, external templates, or build-time dependencies.
 from __future__ import annotations
 
 import html
+import hashlib
 import json
 import re
 import shutil
@@ -18,6 +19,8 @@ ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'blog-src'
 SITE = json.loads((SOURCE / 'site.json').read_text(encoding='utf-8'))
 BASE = SITE['url'].rstrip('/')
+CSS_REV = hashlib.sha256((SOURCE / 'static' / 'style.css').read_bytes()).hexdigest()[:12]
+JS_REV = hashlib.sha256((SOURCE / 'static' / 'site.js').read_bytes()).hexdigest()[:12]
 GENERATED: list[str] = []
 
 
@@ -161,7 +164,7 @@ def page(title, body, path='/', active='', description=None, article=None):
 <link rel="canonical" href="{esc(BASE+path)}"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="alternate" type="application/atom+xml" title="Forgoi · Unity 学习手记" href="/atom.xml">
 <meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:title" content="{esc(full_title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{esc(BASE+path)}"><meta property="og:locale" content="zh_CN">
-<link rel="stylesheet" href="/assets/style.css"><script src="/assets/site.js" defer></script>
+<link rel="stylesheet" href="/assets/style.css?v={CSS_REV}"><script src="/assets/site.js?v={JS_REV}" defer></script>
 <script type="application/ld+json">{schema_json}</script>
 </head><body>{header(active)}<main class="wrap" id="main">{body}</main>{footer()}</body></html>
 '''
