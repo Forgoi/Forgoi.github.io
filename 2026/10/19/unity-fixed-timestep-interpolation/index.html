@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Unity 物理学习笔记 01：固定时间步、FixedUpdate 与渲染插值 · Forgoi</title><meta name="description" content="一次计数实验，理清固定更新与渲染帧的关系；再用数值推演，理解插值为什么平滑，以及它付出的延迟代价。">
+<meta name="theme-color" content="#f6f5f0"><meta name="color-scheme" content="light">
+<link rel="canonical" href="https://forgoi.github.io/2026/10/19/unity-fixed-timestep-interpolation/"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="alternate" type="application/atom+xml" title="Forgoi · Unity 学习手记" href="/atom.xml">
+<meta property="og:type" content="article"><meta property="og:title" content="Unity 物理学习笔记 01：固定时间步、FixedUpdate 与渲染插值 · Forgoi"><meta property="og:description" content="一次计数实验，理清固定更新与渲染帧的关系；再用数值推演，理解插值为什么平滑，以及它付出的延迟代价。"><meta property="og:url" content="https://forgoi.github.io/2026/10/19/unity-fixed-timestep-interpolation/"><meta property="og:locale" content="zh_CN">
+<link rel="stylesheet" href="/assets/style.css"><script src="/assets/site.js" defer></script>
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "BlogPosting", "name": "Unity 物理学习笔记 01：固定时间步、FixedUpdate 与渲染插值", "url": "https://forgoi.github.io/2026/10/19/unity-fixed-timestep-interpolation/", "inLanguage": "zh-CN", "headline": "Unity 物理学习笔记 01：固定时间步、FixedUpdate 与渲染插值", "datePublished": "2026-10-19", "author": {"@type": "Person", "name": "Forgoi"}, "description": "一次计数实验，理清固定更新与渲染帧的关系；再用数值推演，理解插值为什么平滑，以及它付出的延迟代价。"}</script>
+</head><body><a class="skip" href="#main">跳转到正文</a><div class="wrap"><header class="site-header"><a class="brand" href="/" aria-label="Forgoi 首页"><span class="brand-mark" aria-hidden="true">f.</span><span class="brand-name">Forgoi</span><span class="brand-caption">FIELD NOTES</span></a><nav class="nav" aria-label="主导航"><a href="/">首页</a><a href="/archives/" aria-current="page">文章</a><a href="/learning/">学习路线</a><a class="github" href="https://github.com/Forgoi/Forgoi.github.io" aria-label="在 GitHub 查看博客源码">GitHub <span aria-hidden="true">↗</span></a></nav></header></div><main class="wrap" id="main"><header class="page-head"><a class="eyebrow" href="/archives/">← UNITY / LEARNING NOTES</a><h1>Unity 物理学习笔记 01：固定时间步、FixedUpdate 与渲染插值</h1><p>一次计数实验，理清固定更新与渲染帧的关系；再用数值推演，理解插值为什么平滑，以及它付出的延迟代价。</p><div class="post-meta"><span class="pill">学习笔记</span><time datetime="2026-10-19">2026.10.19</time><span>14 分钟阅读</span></div></header><div class="article-layout"><article class="article-body" aria-label="文章正文"><details class="mobile-toc"><summary>本篇目录</summary><ol class="toc"><li><a href="#section-1">第一课：固定时间步究竟固定了什么？</a></li><li><a href="#section-5">计数实验：30 FPS 和目标 120 FPS 时发生了什么？</a></li><li><a href="#section-9">第二课：物理更新正常，为什么运动仍可能看起来不连续？</a></li><li><a href="#section-15">前两课留下的判断方法</a></li><li><a href="#section-16">参考资料</a></li></ol></details><p>这篇笔记整理物理学习前两课的阅读、问题辨析和实验结果：先弄清物理更新与渲染帧的关系，再理解插值为什么能让运动看起来更平滑，以及它付出的延迟代价。</p>
+<p>实践环境是 <strong>Unity 6000.3.25f1</strong>。已经实际运行的是 <code>FixedUpdate</code> 计数实验；插值部分是阅读和数值推演，还没有进行运动物体的插值对照测试。</p>
+<h2 id="section-1">第一课：固定时间步究竟固定了什么？</h2>
+<h3 id="section-2">1. 乘上 dt，解决的是哪一个问题？</h3>
+<p>先从匀速运动看起：</p>
+<div class="code-block"><div class="code-toolbar"><span>TEXT</span><button class="copy-code" type="button" aria-label="复制代码" aria-live="polite">复制</button></div><pre tabindex="0"><code>本次位移 = 速度 × 本次推进的时间</code></pre></div>
+<p>假设速度为 10 m/s：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="数据表，可横向滚动"><table><thead><tr><th scope="col">固定时间步</th><th scope="col">每秒步数</th><th scope="col">每步位移</th><th scope="col">推进 1 秒的总位移</th></tr></thead><tbody><tr><td>0.02 s</td><td>50</td><td>0.2 m</td><td>10 m</td></tr><tr><td>0.01 s</td><td>100</td><td>0.1 m</td><td>10 m</td></tr></tbody></table></div>
+<p>这里假设 <code>timeScale = 1</code>，没有丢弃时间，也能及时完成所需的更新。把时间步减半后，每一步走得更少、每秒执行更多次，总速度仍然是 10 m/s。</p>
+<p>所以，“时间步更小”不能解释成“物体移动得更快或更慢”。它改变的是时间离散的粒度。</p>
+<p>另一个容易混在一起的问题是数值稳定性。对这个简单的恒速位移公式，按时间缩放就能正确累计距离；但涉及加速度、弹簧或碰撞的离散求解时，时间步大小仍会影响误差与稳定性。<strong>乘上 dt，并不意味着任意大小的 dt 都适合物理模拟。</strong></p>
+<p>这也是 <a href="https://gafferongames.com/post/fix_your_timestep/">Gaffer 的《Fix Your Timestep!》</a>讨论固定时间步的出发点。这里需要分别回答两个问题：运动是否按经过的时间推进，以及离散求解是否足够稳定。</p>
+<h3 id="section-3">2. 一帧为什么可以有 0 次、1 次或多次 FixedUpdate？</h3>
+<p>理解这个现象时，我把“画一帧”和“物理前进一步”分开考虑。</p>
+<p>用一个累加器保存尚未模拟的时间：每帧把新增时间放进去；只要剩余时间不少于一个固定步长，就推进一步并扣掉相应时间；不足一步的余量留到下一帧。</p>
+<p>例如固定步长为 0.02 秒：</p>
+<ul><li>余量还没凑够 0.02 秒：这一帧不需要新增固定更新。</li><li>凑够一个步长：执行一次。</li><li>累积了两个或更多完整步长：在这一帧执行多次。</li></ul>
+<p>固定的是<strong>每次模拟推进的游戏时间</strong>。不能把它理解成独立于主循环、每隔恰好 20 毫秒墙钟时间就触发一次的计时器。</p>
+<p>Unity 的 <a href="https://docs.unity3d.com/6000.3/Documentation/Manual/fixed-updates.html">Fixed updates 文档</a>说明了固定更新与帧循环的这种关系。实际调度还受最大时间步等限制影响，因此“50 次/秒”要放在游戏时间正常推进、没有触发追赶限制的条件下理解。</p>
+<h3 id="section-4">3. 为什么低帧率时，不能只靠减小时间步？</h3>
+<p>如果渲染帧已经很慢，一帧内就可能需要补做更多固定更新。继续减小固定时间步，会进一步增加每秒的物理计算量；如果 CPU 本来就是瓶颈，反而可能让后续帧更慢。</p>
+<p>这里要同时考虑模拟质量和计算预算，而不是把更小的数值当成通用优化。Unity 的 <a href="https://docs.unity3d.com/6000.3/Documentation/Manual/physics-optimization-cpu-frequency.html">物理更新频率优化文档</a>也专门讨论了补做固定更新造成的负载增长。</p>
+<h2 id="section-5">计数实验：30 FPS 和目标 120 FPS 时发生了什么？</h2>
+<h3 id="section-6">实验方法</h3>
+<p>在场景中挂一个 <code>FixedStepProbe</code>，保持：</p>
+<ul><li><code>Time.fixedDeltaTime = 0.02f</code></li><li><code>Time.timeScale = 1f</code></li><li><code>QualitySettings.vSyncCount = 0</code></li><li>分别设置 <code>Application.targetFrameRate</code> 为 30 和 120</li></ul>
+<p>实验脚本：<a href="/downloads/FixedStepProbe.cs">下载 FixedStepProbe.cs</a>。将它挂到场景中的 GameObject 上，再按上述设置运行。</p>
+<p>脚本在 <code>FixedUpdate</code> 中计数，到 <code>Update</code> 时记录这一帧之前发生了几次固定更新。每约 5 秒汇总一次，避免逐帧输出日志干扰观察。刚启用和切换目标帧率的过渡帧会被舍弃。</p>
+<p>这里的“实测 FPS”指 <code>Update</code> 次数除以真实经过时间；它不是显示器扫描率的测量。“固定步数”指脚本收到的 <code>FixedUpdate</code> 回调次数，不是物理求解器内部迭代次数。</p>
+<h3 id="section-7">2026-10-19 的实际记录</h3>
+<p>两组日志的统计窗口都显示为 5.00 秒：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="数据表，可横向滚动"><table><thead><tr><th scope="col">指标</th><th scope="col">目标 30 FPS</th><th scope="col">目标 120 FPS</th></tr></thead><tbody><tr><td>实测 Update/s</td><td>30.0</td><td>82.4</td></tr><tr><td>总帧数</td><td>150</td><td>412</td></tr><tr><td>FixedUpdate 总次数</td><td>250</td><td>250</td></tr><tr><td>FixedUpdate/s</td><td>50.0</td><td>50.0</td></tr><tr><td>平均固定步/帧</td><td>1.667</td><td>0.607</td></tr><tr><td>0 次固定更新的帧</td><td>0（0.0%）</td><td>164（39.8%）</td></tr><tr><td>1 次固定更新的帧</td><td>50（33.3%）</td><td>246（59.7%）</td></tr><tr><td>2 次及以上固定更新的帧</td><td>100（66.7%）</td><td>2（0.5%）</td></tr></tbody></table></div>
+<p>这些数字可以互相核对。</p>
+<p>目标 30 FPS 的一组：</p>
+<div class="code-block"><div class="code-toolbar"><span>TEXT</span><button class="copy-code" type="button" aria-label="复制代码" aria-live="polite">复制</button></div><pre tabindex="0"><code>0 + 50 + 100 = 150 帧
+50 × 1 + 100 × 2 = 250 次 FixedUpdate
+250 ÷ 150 ≈ 1.667 次/帧</code></pre></div>
+<p>目标 120 FPS 的一组：</p>
+<div class="code-block"><div class="code-toolbar"><span>TEXT</span><button class="copy-code" type="button" aria-label="复制代码" aria-live="polite">复制</button></div><pre tabindex="0"><code>164 + 246 + 2 = 412 帧
+246 × 1 + 2 × 2 = 250 次 FixedUpdate
+250 ÷ 412 ≈ 0.607 次/帧</code></pre></div>
+<p>第二组只有 2 帧进入了“2 次及以上”这一档；扣除 246 次单步更新，剩余 4 次固定更新，因此这 2 帧各执行了 2 次。第一组的总次数也说明，100 个多步帧均为 2 次。</p>
+<h3 id="section-8">这组实验支持什么结论？</h3>
+<p><strong>第一，两种实际帧率下，固定更新都维持在约 50 次/秒。</strong> 渲染帧数量变了，固定步长没有跟着变。</p>
+<p><strong>第二，平均每帧固定步数可以小于 1，也可以大于 1。</strong> 30 FPS 时需要把多个固定更新放进部分帧；约 82.4 FPS 时则有很多帧不需要固定更新。</p>
+<p><strong>第三，平均帧率高于 50，不等于每一帧都绝不会发生多次固定更新。</strong> 平均值描述的是整个窗口；这份日志中仍然出现了 2 个双步帧。仅凭汇总数据，不能还原各帧耗时或确定它们出现的具体原因。</p>
+<p><strong>第四，目标 120 FPS 不等于实际 120 FPS。</strong> 这一组实际测得 82.4 FPS，因此这里分析的是“目标为 120、实际约 82.4”的结果。实验没有提供足够的性能证据，不能据此判断为什么没有达到目标。</p>
+<p>这个实验验证的是调度关系。它没有测试碰撞精度、积分误差，也没有量化减小固定时间步后的 CPU 成本。</p>
+<h2 id="section-9">第二课：物理更新正常，为什么运动仍可能看起来不连续？</h2>
+<p>物理状态只在固定时间点更新，画面却可能更频繁地刷新。如果每一帧都直接显示最近一次物理位置，两个物理更新之间的若干帧可能看到相同的位置，随后再跳到下一个位置。</p>
+<p>于是，第二课要解决的问题变成：<strong>怎样从已有的物理状态，为当前画面构造一个更平滑的位置？</strong></p>
+<h3 id="section-10">1. 插值使用上一状态和当前状态</h3>
+<p>记最近两个物理状态为 <code>previous</code> 和 <code>current</code>，固定步长为 <code>dt</code>。消耗掉所有完整固定步后，累加器中剩余的时间为 <code>remainder</code>。</p>
+<div class="code-block"><div class="code-toolbar"><span>TEXT</span><button class="copy-code" type="button" aria-label="复制代码" aria-live="polite">复制</button></div><pre tabindex="0"><code>alpha = remainder / dt
+显示位置 = previous × (1 - alpha) + current × alpha</code></pre></div>
+<p>在没有额外截断积压时间等处理的这个简单模型中，<code>0 &lt;= remainder &lt; dt</code>，所以 <code>0 &lt;= alpha &lt; 1</code>。</p>
+<p>这里需要纠正一个容易产生的理解：<strong>插值不是只在“本帧 0 次 FixedUpdate”时执行。</strong></p>
+<p>它位于固定步推进之后的渲染阶段。无论这一帧刚刚推进了 0 次、1 次还是多次，渲染时都可以根据最新的两个已知状态和余量计算显示位置。多步帧结束后，使用的是最后相邻的那一对状态。</p>
+<p>这一思路对应《Fix Your Timestep!》中的 <a href="https://gafferongames.com/post/fix_your_timestep/#the-final-touch">The final touch</a> 小节；下面用本课的匀速例子算清楚它的时间含义。</p>
+<h3 id="section-11">2. 一个具体算例：为什么显示的是 0.3 m？</h3>
+<p>假设物体从 0 开始以 10 m/s 匀速前进，固定步长为 0.02 秒，且 <code>timeScale = 1</code>。</p>
+<p>已经算出的两个物理位置是：</p>
+<div class="table-scroll" tabindex="0" role="region" aria-label="数据表，可横向滚动"><table><thead><tr><th scope="col">状态</th><th scope="col">物理时间</th><th scope="col">位置</th></tr></thead><tbody><tr><td>previous</td><td>0.02 s</td><td>0.2 m</td></tr><tr><td>current</td><td>0.04 s</td><td>0.4 m</td></tr></tbody></table></div>
+<p>现在渲染时间来到 0.05 秒，还剩 0.01 秒不足以推进下一个完整固定步：</p>
+<div class="code-block"><div class="code-toolbar"><span>TEXT</span><button class="copy-code" type="button" aria-label="复制代码" aria-live="polite">复制</button></div><pre tabindex="0"><code>alpha = 0.01 / 0.02 = 0.5
+显示位置 = 0.2 × 0.5 + 0.4 × 0.5 = 0.3 m</code></pre></div>
+<p>0.3 m 对应这个匀速例子中的 0.03 秒，而当前渲染时间是 0.05 秒。两者相差 0.02 秒，也就是一个固定时间步。</p>
+<p>“为什么不显示 0.5 m？”这个问题的关键在于：0.5 m 对应当前时刻的理想匀速位置，但尚未被这两个已知物理状态覆盖。用 0.04 秒的位置加上速度去预测 0.05 秒的位置，已经属于外推。</p>
+<p>这里的一个步长延迟，是相对于当前渲染时间而言。在本例中，插值位置相对于最新物理状态 <code>current</code> 落后的是 0.01 秒，两种比较基准不能混淆。</p>
+<h3 id="section-12">3. 插值与外推的取舍</h3>
+<p>在同一个例子中，外推可以计算：</p>
+<div class="code-block"><div class="code-toolbar"><span>TEXT</span><button class="copy-code" type="button" aria-label="复制代码" aria-live="polite">复制</button></div><pre tabindex="0"><code>预测位置 = 0.4 + 10 × 0.01 = 0.5 m</code></pre></div>
+<p>如果速度真的一直不变，这个预测恰好正确。但如果接下来发生碰撞或受到新的力，只靠当前速度就可能猜错，甚至先显示越过碰撞边界的位置，再在后续更新中修正。</p>
+<p>插值用已经知道的状态换取平滑，代价是延迟；外推尝试预测尚未确认的位置，代价是预测误差。Unity 的 <a href="https://docs.unity3d.com/6000.3/Documentation/Manual/rigidbody-interpolation.html">Rigidbody 插值文档</a>明确说明了一个物理更新的插值延迟，以及外推越过碰撞边界后修正的风险。</p>
+<h3 id="section-13">4. 渲染从 60 FPS 提高到 120 FPS，插值延迟会减半吗？</h3>
+<p>在 <code>timeScale = 1</code>、固定步长保持 0.02 秒的条件下，这种插值引入的一个固定步延迟仍约为 <strong>20 ms</strong>。</p>
+<p>渲染帧率升高，只是能在这条显示轨迹上取更多次样。它不会自动把物理步长从 0.02 秒变成 0.01 秒。</p>
+<p>同时，20 ms 说的是这个插值机制的时间偏移，<strong>不是整个游戏从输入到屏幕显示的总延迟</strong>。不能用它代替完整的端到端延迟测量。</p>
+<h3 id="section-14">5. 插值有没有让物理本身更准确？</h3>
+<p>插值改变的是呈现给画面的状态，并没有凭空增加物理模拟步数。运动看起来更连续，不等于碰撞检测或数值积分因此更精确。</p>
+<p>使用 Unity 自带的 Rigidbody Interpolate 时，应把它当成渲染平滑选项来理解。前面的累加器和位置公式用于解释原理，不是要求在 Unity 自动物理循环之外再重复运行一套模拟。</p>
+<h2 id="section-15">前两课留下的判断方法</h2>
+<p>遇到运动表现问题时，可以先问清楚问题落在哪一层：</p>
+<ol><li><strong>速度随帧率变化吗？</strong> 检查位移是否正确考虑时间，以及更新位置的方式。</li><li><strong>物理求解不稳定吗？</strong> 检查时间步和模拟方法，不要只靠“已经乘了 dt”下结论。</li><li><strong>固定更新次数和渲染帧数不同吗？</strong> 这是正常调度可能产生的结果，用实际计数验证。</li><li><strong>物理位置合理，但画面跳动吗？</strong> 再考虑插值及其延迟取舍。</li><li><strong>性能已经不足吗？</strong> 先找瓶颈，避免盲目减小固定时间步增加负担。</li></ol>
+<p>前两课已完成。实际运行的是固定更新计数实验，插值部分完成了阅读与数值推演；运动物体在 None、Interpolate、Extrapolate 下的表现还没有做对照测试。</p>
+<h2 id="section-16">参考资料</h2>
+<ul><li><a href="https://gafferongames.com/post/fix_your_timestep/">Glenn Fiedler：Fix Your Timestep!</a></li><li><a href="https://docs.unity3d.com/6000.3/Documentation/Manual/fixed-updates.html">Unity 6.3：Fixed updates</a></li><li><a href="https://docs.unity3d.com/6000.3/Documentation/Manual/rigidbody-interpolation.html">Unity 6.3：Apply interpolation to a Rigidbody</a></li><li><a href="https://docs.unity3d.com/6000.3/Documentation/Manual/physics-optimization-cpu-frequency.html">Unity 6.3：Set fixed timestep to optimize physics simulation frequency</a></li></ul><div class="article-end"><a href="/archives/">← 所有文章</a><a href="/learning/">下一站：ECS 学习路线 ↗</a></div></article><aside class="article-aside" aria-label="文章目录"><p class="aside-heading">ON THIS PAGE / 本篇目录</p><ol class="toc"><li><a href="#section-1">第一课：固定时间步究竟固定了什么？</a></li><li><a href="#section-5">计数实验：30 FPS 和目标 120 FPS 时发生了什么？</a></li><li><a href="#section-9">第二课：物理更新正常，为什么运动仍可能看起来不连续？</a></li><li><a href="#section-15">前两课留下的判断方法</a></li><li><a href="#section-16">参考资料</a></li></ol><div class="aside-note"><strong>把结论放回条件里。</strong>实测、推演与计划分开记录。<br>看见现象，也说明它的边界。</div><div class="aside-note"><div class="tags"><span class="tag">Unity 6.3</span><span class="tag">FixedUpdate</span><span class="tag">物理模拟</span></div></div></aside></div></main><div class="wrap"><footer class="site-footer"><span class="footer-brand">FORGOI <span aria-hidden="true">/</span> 学习，记录，继续。</span><div class="footer-links"><a href="/about/">关于本站</a><a href="/atom.xml">RSS 订阅</a><a href="https://github.com/Forgoi/Forgoi.github.io">源码 ↗</a></div></footer></div></body></html>

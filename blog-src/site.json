@@ -1,0 +1,25 @@
+{
+  "name": "Forgoi",
+  "url": "https://forgoi.github.io",
+  "description": "记录 Unity 学习中的问题、实验与理解。从固定时间步长出发，走向 ECS、Burst 与 Job System。",
+  "repository": "https://github.com/Forgoi/Forgoi.github.io",
+  "posts": [
+    {
+      "file": "unity-fixed-timestep-interpolation.md",
+      "title": "Unity 物理学习笔记 01：固定时间步、FixedUpdate 与渲染插值",
+      "short_title": "固定时间步、FixedUpdate\n与渲染插值",
+      "date": "2026-10-19",
+      "permalink": "/2026/10/19/unity-fixed-timestep-interpolation/",
+      "excerpt": "一次计数实验，理清固定更新与渲染帧的关系；再用数值推演，理解插值为什么平滑，以及它付出的延迟代价。",
+      "tags": [
+        "Unity 6.3",
+        "FixedUpdate",
+        "物理模拟",
+        "时间步",
+        "插值"
+      ],
+      "status": "completed",
+      "read_minutes": 14
+    }
+  ]
+}
