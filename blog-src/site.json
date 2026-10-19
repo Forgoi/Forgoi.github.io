@@ -5,6 +5,23 @@
   "repository": "https://github.com/Forgoi/Forgoi.github.io",
   "posts": [
     {
+      "file": "unity-ecs-cache-archetype-chunk.md",
+      "title": "Unity ECS 学习笔记 01：从缓存局部性到 Chunk 迁移",
+      "short_title": "从缓存局部性到 Chunk 迁移",
+      "date": "2026-10-19",
+      "permalink": "/2026/10/19/unity-ecs-cache-archetype-chunk/",
+      "excerpt": "从缓存行、AoS / SoA 和组件数组出发，理清 Archetype 如何分组，以及添加组件时的数据迁移与补洞。这一节记录概念阅读和理解检查。",
+      "tags": [
+        "Unity ECS",
+        "数据布局",
+        "Archetype / Chunk",
+        "缓存局部性"
+      ],
+      "status": "completed",
+      "read_minutes": 13,
+      "visual": "ecs-layout"
+    },
+    {
       "file": "unity-fixed-timestep-interpolation.md",
       "title": "Unity 物理学习笔记 01：固定时间步、FixedUpdate 与渲染插值",
       "short_title": "固定时间步、FixedUpdate\n与渲染插值",

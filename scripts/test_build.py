@@ -43,4 +43,23 @@ class MarkdownTests(unittest.TestCase):
         p=Text();p.feed(build.highlighted(code,'csharp'))
         self.assertEqual(code,p.out)
 
+class BlogContentTests(unittest.TestCase):
+    def test_newest_feature_matches_article(self):
+        post = build.SITE['posts'][0]
+        self.assertEqual(post['file'], 'unity-ecs-cache-archetype-chunk.md')
+        content = build.feature(post)
+        self.assertIn('ECS / CONCEPT NOTES', content)
+        self.assertIn('尚未性能测量', content)
+        self.assertNotIn('FIXED STEP / EXPERIMENT', content)
+
+    def test_learning_links_and_progress(self):
+        from unittest.mock import patch
+        with patch.object(build, 'write') as write:
+            build.learning(build.SITE['posts'])
+        content = write.call_args.args[1]
+        self.assertIn('href="/2026/10/19/unity-fixed-timestep-interpolation/"', content)
+        self.assertIn('href="/2026/10/19/unity-ecs-cache-archetype-chunk/"', content)
+        self.assertIn('基础已学，Query 待学', content)
+        self.assertNotIn('ECS 系列刚开始阅读', content)
+
 if __name__=='__main__':unittest.main()
