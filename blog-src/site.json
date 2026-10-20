@@ -5,6 +5,23 @@
   "repository": "https://github.com/Forgoi/Forgoi.github.io",
   "posts": [
     {
+      "file": "unity-ecs-query-traversal.md",
+      "title": "Unity ECS 学习笔记 02：Query 怎样筛选和遍历数据",
+      "short_title": "Query 怎样筛选\n和遍历数据",
+      "date": "2026-10-20",
+      "permalink": "/2026/10/20/unity-ecs-query-traversal/",
+      "excerpt": "从组件条件匹配到 Chunk 遍历，区分 All / Any / None、字段数值与组件存在，再理清 RefRO / RefRW 和普通数据更新。",
+      "tags": [
+        "Unity ECS",
+        "EntityQuery",
+        "Chunk 遍历",
+        "RefRO / RefRW"
+      ],
+      "status": "completed",
+      "read_minutes": 10,
+      "visual": "ecs-query"
+    },
+    {
       "file": "unity-ecs-cache-archetype-chunk.md",
       "title": "Unity ECS 学习笔记 01：从缓存局部性到 Chunk 迁移",
       "short_title": "从缓存局部性到 Chunk 迁移",

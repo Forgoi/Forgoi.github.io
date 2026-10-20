@@ -46,10 +46,10 @@ class MarkdownTests(unittest.TestCase):
 class BlogContentTests(unittest.TestCase):
     def test_newest_feature_matches_article(self):
         post = build.SITE['posts'][0]
-        self.assertEqual(post['file'], 'unity-ecs-cache-archetype-chunk.md')
+        self.assertEqual(post['file'], 'unity-ecs-query-traversal.md')
         content = build.feature(post)
-        self.assertIn('ECS / CONCEPT NOTES', content)
-        self.assertIn('尚未性能测量', content)
+        self.assertIn('ECS / QUERY NOTES', content)
+        self.assertIn('代码实践待做', content)
         self.assertNotIn('FIXED STEP / EXPERIMENT', content)
 
     def test_learning_links_and_progress(self):
@@ -59,7 +59,9 @@ class BlogContentTests(unittest.TestCase):
         content = write.call_args.args[1]
         self.assertIn('href="/2026/10/19/unity-fixed-timestep-interpolation/"', content)
         self.assertIn('href="/2026/10/19/unity-ecs-cache-archetype-chunk/"', content)
-        self.assertIn('基础已学，Query 待学', content)
+        self.assertIn('Query 概念已完成，实践待做', content)
+        self.assertIn('href="/2026/10/20/unity-ecs-query-traversal/"', content)
+        self.assertNotIn('Query 是下一步', content)
         self.assertNotIn('ECS 系列刚开始阅读', content)
 
 class FeatureTests(unittest.TestCase):
