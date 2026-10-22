@@ -46,10 +46,11 @@ class MarkdownTests(unittest.TestCase):
 class BlogContentTests(unittest.TestCase):
     def test_newest_feature_matches_article(self):
         post = build.SITE['posts'][0]
-        self.assertEqual(post['file'], 'unity-ecs-query-traversal.md')
+        self.assertEqual(post['file'], 'unity-ecs-query-practice.md')
         content = build.feature(post)
-        self.assertIn('ECS / QUERY NOTES', content)
-        self.assertIn('代码实践待做', content)
+        self.assertIn('ECS / QUERY EXPERIMENT', content)
+        self.assertIn('两次运行已验证 · 非性能测试', content)
+        self.assertIn('A=1  B=2  C=0  D=3', content)
         self.assertNotIn('FIXED STEP / EXPERIMENT', content)
 
     def test_learning_links_and_progress(self):
@@ -59,10 +60,25 @@ class BlogContentTests(unittest.TestCase):
         content = write.call_args.args[1]
         self.assertIn('href="/2026/10/19/unity-fixed-timestep-interpolation/"', content)
         self.assertIn('href="/2026/10/19/unity-ecs-cache-archetype-chunk/"', content)
-        self.assertIn('Query 概念已完成，实践待做', content)
+        self.assertIn('Query 概念与基础实践已完成', content)
         self.assertIn('href="/2026/10/20/unity-ecs-query-traversal/"', content)
+        self.assertIn('href="/2026/10/22/unity-ecs-query-practice/"', content)
+        self.assertNotIn('尚未运行 ECS 示例', content)
         self.assertNotIn('Query 是下一步', content)
         self.assertNotIn('ECS 系列刚开始阅读', content)
+
+    def test_query_practice_evidence_and_download(self):
+        article = (build.SOURCE / 'posts' / 'unity-ecs-query-practice.md').read_text()
+        self.assertIn('[Query实验] 本次匹配数量：2', article)
+        self.assertIn('[Query实验] 本次匹配数量：3', article)
+        self.assertIn('A=1，B=2，C=0，D=0', article)
+        self.assertIn('A=1，B=2，C=0，D=3', article)
+        self.assertIn('不是额外的运行结果', article)
+        self.assertIn('没有验证 Jobs、Burst 或 SIMD', article)
+        source = (build.SOURCE / 'downloads' / 'EcsQueryPractice.cs').read_bytes()
+        self.assertEqual(source, (build.ROOT / 'downloads' / 'EcsQueryPractice.cs').read_bytes())
+        self.assertIn(b'.WithNone<Frozen>()', source)
+
 
 class FeatureTests(unittest.TestCase):
     def test_article_only_counter_and_donations(self):

@@ -5,6 +5,23 @@
   "repository": "https://github.com/Forgoi/Forgoi.github.io",
   "posts": [
     {
+      "file": "unity-ecs-query-practice.md",
+      "title": "Unity ECS 学习笔记 03：用四个实体验证 Query 筛选与读写",
+      "short_title": "用四个实体验证 Query 筛选与读写",
+      "date": "2026-10-22",
+      "permalink": "/2026/10/22/unity-ecs-query-practice/",
+      "excerpt": "在 Entities 1.5.0 中完成两次 Query 实验，用真实 Console 日志核对筛选结果，再分清实体句柄、组件值、引用访问与结构体副本。",
+      "tags": [
+        "Unity ECS",
+        "Query",
+        "ISystem",
+        "组件读写"
+      ],
+      "status": "completed",
+      "read_minutes": 9,
+      "visual": "ecs-query-practice"
+    },
+    {
       "file": "unity-ecs-query-traversal.md",
       "title": "Unity ECS 学习笔记 02：Query 怎样筛选和遍历数据",
       "short_title": "Query 怎样筛选\n和遍历数据",
