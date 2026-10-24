@@ -166,3 +166,17 @@ p.Value += 10;
 完成了两次真实运行，验证“组件存在条件决定本例的匹配范围”，也把组件定义、创建实体、写入数值、引用访问和普通结构体副本串在了一起。
 
 本次循环只改变 Position 的字段，没有添加或删除组件，因此不会因为这行位置更新而改变实体的 Archetype。至于这种布局怎样帮助计算、Burst 能否向量化、Job System 怎样安排并行工作，还需要后面的独立学习和实验，不能从这两组日志直接推出性能结论。
+
+## 后续补充：只让实验在指定场景运行
+
+完成 Query 后，在同一个项目继续学习 Burst 时，遇到了实验 System 会在其他场景运行的问题。System 属于 World，不天然属于某一个普通 Scene；默认初始化自动创建的系统，不会因为源文件放在某个场景相关文件夹就受该场景限制。
+
+本课采用显式隔离方案：[下载场景限定版 EcsQueryPractice.cs](/downloads/EcsQueryPractice.SceneScoped.cs)。下载后将文件重命名为 EcsQueryPractice.cs，再完整替换旧文件，不要同时保留两份同名定义。只在 Query 课的场景空对象上挂载 EcsQueryPractice，保存场景后运行。
+
+该版本给实验 ISystem 添加 DisableAutoCreation，避免自动加入默认 World。场景中的 MonoBehaviour 在 Start 创建专用 World，创建实验系统并手动更新一次；不注册到 PlayerLoop，也不修改默认 World。对象销毁时释放整个实验 World，初始化失败也会释放。
+
+此补充保留的是去掉 WithNone 的第二次实验条件，因此匹配 3 个，结果是 A=1、B=2、C=0、D=3。前文原始基线下载仍保留，用于复现最初匹配 2 个的对照，不应混为同一个版本。
+
+限定版已在课堂得到使用者确认可用。这种生命周期跟随挂载对象存在与销毁，而不是每次改变 Active Scene 都重跑；采用叠加加载时，原场景对象未销毁，不能假定切换活动场景就卸载了它。也不要给这个实验对象设置 DontDestroyOnLoad。
+
+参考：[World 概念](https://docs.unity3d.com/Packages/com.unity.entities@1.5/manual/concepts-worlds.html)、[DisableAutoCreation](https://docs.unity3d.com/Packages/com.unity.entities@1.5/api/Unity.Entities.DisableAutoCreationAttribute.html)。

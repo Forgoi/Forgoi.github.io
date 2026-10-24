@@ -46,11 +46,11 @@ class MarkdownTests(unittest.TestCase):
 class BlogContentTests(unittest.TestCase):
     def test_newest_feature_matches_article(self):
         post = build.SITE['posts'][0]
-        self.assertEqual(post['file'], 'unity-ecs-query-practice.md')
+        self.assertEqual(post['file'], 'unity-burst-simd-jobs.md')
         content = build.feature(post)
-        self.assertIn('ECS / QUERY EXPERIMENT', content)
-        self.assertIn('两次运行已验证 · 非性能测试', content)
-        self.assertIn('A=1  B=2  C=0  D=3', content)
+        self.assertIn('BURST / SIMD / JOBS', content)
+        self.assertIn('数值通过 · 向量化有条件 · 性能未测', content)
+        self.assertIn('IJobFor.ScheduleParallel()', content)
         self.assertNotIn('FIXED STEP / EXPERIMENT', content)
 
     def test_learning_links_and_progress(self):
@@ -66,6 +66,13 @@ class BlogContentTests(unittest.TestCase):
         self.assertNotIn('尚未运行 ECS 示例', content)
         self.assertNotIn('Query 是下一步', content)
         self.assertNotIn('ECS 系列刚开始阅读', content)
+
+    def test_burst_jobs_evidence_and_download(self):
+        article = (build.SOURCE / 'posts' / 'unity-burst-simd-jobs.md').read_text()
+        for evidence in ['Safety Check Off', 'Target (Auto)', '1024/1024', '没有重新查看 IJobFor', '没有实际运行 1025', '不是性能基准', '归约']:
+            self.assertIn(evidence, article)
+        for name in ['BurstSimdProbe.cs', 'EcsQueryPractice.SceneScoped.cs']:
+            self.assertEqual((build.SOURCE / 'downloads' / name).read_bytes(), (build.ROOT / 'downloads' / name).read_bytes())
 
     def test_query_practice_evidence_and_download(self):
         article = (build.SOURCE / 'posts' / 'unity-ecs-query-practice.md').read_text()

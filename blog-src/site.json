@@ -5,6 +5,23 @@
   "repository": "https://github.com/Forgoi/Forgoi.github.io",
   "posts": [
     {
+      "file": "unity-burst-simd-jobs.md",
+      "title": "Unity ECS 学习笔记 04：从 Burst SIMD 到 Job 并行调度",
+      "short_title": "看见 SIMD，再理解 Job 并行",
+      "date": "2026-10-24",
+      "permalink": "/2026/10/24/unity-burst-simd-jobs/",
+      "excerpt": "用 Burst Inspector 找到向量加法，再跑通 Run、Schedule 与 ScheduleParallel，分清数值正确、生成代码、线程调度和性能证据。",
+      "tags": [
+        "Burst",
+        "SIMD",
+        "Job System",
+        "IJobFor"
+      ],
+      "status": "completed",
+      "read_minutes": 15,
+      "visual": "burst-jobs"
+    },
+    {
       "file": "unity-ecs-query-practice.md",
       "title": "Unity ECS 学习笔记 03：用四个实体验证 Query 筛选与读写",
       "short_title": "用四个实体验证 Query 筛选与读写",
