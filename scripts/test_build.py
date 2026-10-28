@@ -46,11 +46,11 @@ class MarkdownTests(unittest.TestCase):
 class BlogContentTests(unittest.TestCase):
     def test_newest_feature_matches_article(self):
         post = build.SITE['posts'][0]
-        self.assertEqual(post['file'], 'unity-burst-simd-jobs.md')
+        self.assertEqual(post['file'], 'unity-job-dependencies.md')
         content = build.feature(post)
-        self.assertIn('BURST / SIMD / JOBS', content)
-        self.assertIn('数值通过 · 向量化有条件 · 性能未测', content)
-        self.assertIn('IJobFor.ScheduleParallel()', content)
+        self.assertIn('JOB DEPENDENCIES', content)
+        self.assertIn('依赖实践已完成 · 性能未测', content)
+        self.assertIn('PASS: 8/8', content)
         self.assertNotIn('FIXED STEP / EXPERIMENT', content)
 
     def test_learning_links_and_progress(self):
@@ -63,9 +63,17 @@ class BlogContentTests(unittest.TestCase):
         self.assertIn('Query 概念与基础实践已完成', content)
         self.assertIn('href="/2026/10/20/unity-ecs-query-traversal/"', content)
         self.assertIn('href="/2026/10/22/unity-ecs-query-practice/"', content)
+        self.assertIn('href="/2026/10/27/unity-job-dependencies/"', content)
+        self.assertNotIn('多任务依赖仍待实践', content)
         self.assertNotIn('尚未运行 ECS 示例', content)
         self.assertNotIn('Query 是下一步', content)
         self.assertNotIn('ECS 系列刚开始阅读', content)
+
+    def test_dependency_lesson_evidence(self):
+        article = (build.SOURCE / 'posts' / 'unity-job-dependencies.md').read_text()
+        for term in ['PASS: 8/8; displacement = 2, -4, 6, -8, 10, -12, 14, -16', '核心片段', '不能单独作为完整脚本运行', '不是性能基准', '没有 Profiler 时间线', '尚未完成', 'jobD.Schedule(ready)', 'CombineDependencies(handleA, handleC)']:
+            self.assertIn(term, article)
+        self.assertNotIn('/downloads/JobDependencyProbe.cs', article)
 
     def test_burst_jobs_evidence_and_download(self):
         article = (build.SOURCE / 'posts' / 'unity-burst-simd-jobs.md').read_text()

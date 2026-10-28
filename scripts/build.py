@@ -158,19 +158,23 @@ def page(title, body, path='/', active='', description=None, article=None):
     if article:
         schema.update({'headline':title,'datePublished':article['date'],'author':{'@type':'Person','name':'Forgoi'},'description':description})
     schema_json = json.dumps(schema, ensure_ascii=False).replace('<', '\\u003c')
+    home_assets = ''
+    if active == 'home':
+        home_rev = hashlib.sha256((SOURCE / 'static' / 'starfield.css').read_bytes() + (SOURCE / 'static' / 'starfield.js').read_bytes()).hexdigest()[:12]
+        home_assets = f'<link rel="stylesheet" href="/assets/starfield.css?v={home_rev}"><script src="/assets/starfield.js?v={home_rev}" defer></script>'
     counter_script = '<script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>' if article else ''
     return f'''<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{esc(full_title)}</title><meta name="description" content="{esc(description)}">
-<meta name="theme-color" content="#f8faff"><meta name="color-scheme" content="light">
+<meta name="theme-color" content="{'#060a12' if active == 'home' else '#f8faff'}"><meta name="color-scheme" content="{'dark' if active == 'home' else 'light'}">
 <link rel="canonical" href="{esc(BASE+path)}"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="alternate" type="application/atom+xml" title="Forgoi · Unity 学习手记" href="/atom.xml">
 <meta property="og:type" content="{'article' if article else 'website'}"><meta property="og:title" content="{esc(full_title)}"><meta property="og:description" content="{esc(description)}"><meta property="og:url" content="{esc(BASE+path)}"><meta property="og:locale" content="zh_CN">
 <link rel="stylesheet" href="/assets/style.css?v={CSS_REV}"><script src="/assets/site.js?v={JS_REV}" defer></script>
-<script type="application/ld+json">{schema_json}</script>
-</head><body>{header(active)}<main class="wrap" id="main">{body}</main>{footer()}{counter_script}</body></html>
+<script type="application/ld+json">{schema_json}</script>{home_assets}
+</head><body{' class="cosmic-home"' if active == 'home' else ''}>{header(active)}<main class="wrap" id="main">{body}</main>{footer()}{counter_script}</body></html>
 '''
 
 
@@ -178,7 +182,7 @@ ROUTES = [
     ('01', '数据布局与缓存', '完成缓存行、AoS / SoA 与组件数组的概念阅读。', '概念已学'),
     ('02', 'Archetype、Chunk 与 Query', '已完成概念学习与两次 Query 筛选、组件读写实验。', '实践已完成'),
     ('03', 'Burst 与 SIMD', '原始 IJob 的指定配置已观察到 SIMD；性能未测量。', '生成代码已观察'),
-    ('04', 'Job System', '已跑通三种执行方式；继续理解 Burst 原理与多任务依赖。', '基础实践已完成'),
+    ('04', 'Job System', '已完成基础调度与依赖汇合实验；接下来学习 ECS System 的依赖。', '依赖实践已完成'),
 ]
 
 
@@ -201,6 +205,13 @@ def tags(post):
 
 
 def feature(post):
+    if post.get('visual') == 'job-dependencies':
+        return f'''<article class="feature"><div class="feature-copy">{meta(post)}<h3><a href="{post['permalink']}">{esc(post.get('short_title', post['title']))}</a></h3><p>{esc(post['excerpt'])}</p><div class="feature-bottom">{tags(post)}<a class="read-link" href="{post['permalink']}">阅读全文 →</a></div></div><div class="feature-visual" aria-label="A 和 C 独立，D 依赖两者；八项位移结果正确，未测量实际并行或速度。"><div class="code-label"><span>JOB DEPENDENCIES</span><span>05</span></div><pre class="decor-code"><span class="comment">// 两个条件都满足，D 才能开始</span>
+A ──┐
+    ├── D ── Complete()
+C ──┘
+
+<span class="value">PASS: 8/8</span></pre><div class="code-bottom"><span>依赖实践已完成 · 性能未测</span><span>NEXT: ECS DEPENDENCY</span></div></div></article>'''
     if post.get('visual') == 'burst-jobs':
         return f'''<article class="feature"><div class="feature-copy">{meta(post)}<h3><a href="{post['permalink']}">{esc(post.get('short_title', post['title']))}</a></h3><p>{esc(post['excerpt'])}</p><div class="feature-bottom">{tags(post)}<a class="read-link" href="{post['permalink']}">阅读全文 →</a></div></div><div class="feature-visual" aria-label="三种执行方式均通过 1024 项数值校验；原始 IJob 的指定 Inspector 配置观察到 SIMD。不是性能测试。"><div class="code-label"><span>BURST / SIMD / JOBS</span><span>04</span></div><pre class="decor-code"><span class="comment">// 三次正确性验证，不是速度排名</span>
 IJob.Run()              PASS
@@ -238,9 +249,8 @@ A=1  B=2  C=0  D=3</pre><div class="code-bottom"><span>两次运行已验证 · 
 
 
 def home(posts):
-    extra = ''.join(f'<article class="post-strip"><span class="strip-index">{i:02}</span><div>{meta(p)}<h3><a href="{p["permalink"]}">{esc(p["title"])}</a></h3><p>{esc(p["excerpt"])}</p></div><a class="arrow" href="{p["permalink"]}" aria-label="阅读{esc(p["title"])}"><svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></a></article>' for i,p in enumerate(posts[1:],2))
-    body = f'''<section class="hero" aria-labelledby="hero-title"><div><div class="eyebrow"><span class="dot"></span>UNITY / LEARNING IN PUBLIC</div><h1 id="hero-title">从现象出发，<br><span>把底层想明白。</span></h1><p>记录 Unity 学习中的问题、实验与理解。<br>从每一帧发生的事，走向数据布局、并行与性能。</p><div class="hero-actions"><a class="button-link" href="/archives/">翻开学习手记 <span aria-hidden="true">↗</span></a><a class="hero-route" href="/learning/">我的学习路线 <span aria-hidden="true">→</span></a></div><div class="hero-meta"><span><i></i>边学边记</span><span>代码 · 实验 · 阅读</span><span>持续更新</span></div></div><div class="hero-visual">{diagram()}</div></section><section class="section-rule" aria-labelledby="latest-title"><div class="section-head"><h2 id="latest-title">最近的学习记录 <small>RECENT NOTES</small></h2><a class="text-link" href="/archives/">全部文章 <span aria-hidden="true"><svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></span></a></div>{feature(posts[0]) if posts else ''}<div class="notes-grid">{extra}</div></section><section class="route-section" aria-labelledby="route-title"><div class="section-head"><h2 id="route-title">ECS 学习路线 <small>LEARNING ROADMAP</small></h2><a class="text-link" href="/learning/">查看路线 <span aria-hidden="true"><svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></span></a></div><p class="section-intro">围绕一个问题往下走：ECS 到底为什么快？</p>{route_grid()}</section><div class="home-note"><span><i class="small-dot"></i>Burst / SIMD 与 Job 基础实验已完成；继续理解 Burst 原理与多任务依赖。</span><span>区分实际测量、阅读理解与待验证的问题。</span></div>'''
-    write('index.html', page('', body, active='home'))
+    from starfield import render
+    write('index.html', page('', render(posts), active='home'))
 
 
 def toc_markup(headings):
@@ -271,7 +281,7 @@ def archives(posts):
 def learning(posts):
     first_link = next((p['permalink'] for p in posts if p['file'] == 'unity-fixed-timestep-interpolation.md'), '/archives/')
     ecs_link = next((p['permalink'] for p in posts if p['file'] == 'unity-ecs-cache-archetype-chunk.md'), '/archives/')
-    body = f'''<header class="page-head"><div class="eyebrow">LEARNING ROADMAP</div><h1>带着问题，往底层走。</h1><p>物理前两课之后，沿着数据布局、编译优化和多线程这条线，继续理解 Unity ECS。</p></header><section class="route-page" aria-label="ECS 学习路线">{route_grid()}<div class="reading-notice"><strong>进度说明</strong><span>已完成缓存局部性、数据布局、Archetype / Chunk、结构迁移与 Query 筛选遍历的概念阅读和理解检查。已安装 Entities 1.5.0 并完成两次 Query 筛选与组件读写实验；已在原始 IJob 的指定 Inspector 配置观察到 SIMD，并完成 Run、Schedule、ScheduleParallel 的数值校验。尚未运行性能基准，多任务依赖仍待实践。</span></div><section class="route-detail" id="foundation"><span class="number">00</span><div><span class="pill">前两课已完成</span><h2>物理基础：固定时间步与插值</h2><p>完成 FixedUpdate 计数实验，以及插值与外推的阅读、数值推演。运动物体的插值对照实验仍待实践。</p><a class="read-link" href="{first_link}">阅读学习记录 <svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></a></div></section><section class="route-detail" id="route-01"><span class="number">01</span><div><span class="pill">概念阅读已完成</span><h2>数据布局与 CPU 缓存</h2><p>已理清缓存行、引用数组与结构体数组、AoS / SoA，以及访问方式与布局的关系。</p><p><a class="read-link" href="{ecs_link}">阅读 ECS 第一篇学习记录</a></p><ul><li>连续数据与分散对象，怎样影响缓存命中与遍历？</li><li>AoS、SoA 与组件数组分别描述什么？</li><li>数据布局带来的收益，为什么不等同于 SIMD 或多线程？</li></ul><p>阅读入口：<a class="read-link" href="https://docs.unity3d.com/Packages/com.unity.entities@1.5/manual/concepts-archetypes.html">Unity Entities 1.5 · Archetype concepts <svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></a></p><p>本阶段完成概念阅读与理解检查，尚未做性能对照实验。随后已安装 Entities 1.5.0，并在 Query 实践中完成两次运行。</p></div></section><section class="route-detail" id="route-02"><span class="number">02</span><div><span class="pill reading">Query 概念与基础实践已完成</span><h2>Archetype、Chunk 与查询</h2><p><a class="read-link" href="/2026/10/20/unity-ecs-query-traversal/">阅读 Query 概念记录</a> · <a class="read-link" href="/2026/10/22/unity-ecs-query-practice/">阅读两次 Query 实验记录</a></p><p>已理解分组与迁移，并完成 Query 类型条件、All / Any / None、Chunk 遍历与 RefRO / RefRW 的概念学习。普通字段值更新不改变组件类型组合。</p><ul><li>相同组件组合的实体如何分组与存储？</li><li>Query 如何筛选需要处理的数据？</li><li>添加或删除组件时，结构变化会带来哪些成本？</li></ul></div></section><section class="route-detail" id="route-03"><span class="number">03</span><div><span class="pill">基础学习与汇编观察已完成</span><h2>Burst 与 SIMD</h2><p>原始 IJob 在 Safety Check Off、Target Auto 配置下已观察到 vaddps 与循环展开；这不等于性能提升，也不是 IJobFor 的向量化证据。</p><p><a class="read-link" href="/2026/10/24/unity-burst-simd-jobs/">阅读 Burst 与 Job 实验记录</a></p><ul><li>哪些循环具备向量化条件？哪些写法会阻碍它？</li><li>Burst 编译优化与 SIMD 指令是什么关系？</li><li>怎样用 Burst Inspector 验证，而不是只看代码长相？</li></ul></div></section><section class="route-detail" id="route-04"><span class="number">04</span><div><span class="pill reading">基础调度已实践，任务链待学习</span><h2>Job System 与依赖</h2><p>已跑通 IJob.Run、IJob.Schedule + Complete、IJobFor.ScheduleParallel + Complete；已理解独立索引、数据竞争和归约思路。实际工作线程数与加速幅度未测量，多阶段 Job 依赖是下一步。</p><ul><li>任务如何拆分？读写依赖如何表达？</li><li>什么时候必须同步，什么时候可以继续做别的工作？</li><li>如何区分数据布局、Burst 和多线程各自的贡献？</li></ul></div></section></section>'''
+    body = f'''<header class="page-head"><div class="eyebrow">LEARNING ROADMAP</div><h1>带着问题，往底层走。</h1><p>物理前两课之后，沿着数据布局、编译优化和多线程这条线，继续理解 Unity ECS。</p></header><section class="route-page" aria-label="ECS 学习路线">{route_grid()}<div class="reading-notice"><strong>进度说明</strong><span>已完成缓存局部性、数据布局、Archetype / Chunk、结构迁移与 Query 筛选遍历的概念阅读和理解检查。已安装 Entities 1.5.0 并完成两次 Query 筛选与组件读写实验；已在原始 IJob 的指定 Inspector 配置观察到 SIMD，并完成 Run、Schedule、ScheduleParallel 的数值校验。已完成多任务依赖汇合实验，八项位移校验通过；尚未运行性能基准。</span></div><section class="route-detail" id="foundation"><span class="number">00</span><div><span class="pill">前两课已完成</span><h2>物理基础：固定时间步与插值</h2><p>完成 FixedUpdate 计数实验，以及插值与外推的阅读、数值推演。运动物体的插值对照实验仍待实践。</p><a class="read-link" href="{first_link}">阅读学习记录 <svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></a></div></section><section class="route-detail" id="route-01"><span class="number">01</span><div><span class="pill">概念阅读已完成</span><h2>数据布局与 CPU 缓存</h2><p>已理清缓存行、引用数组与结构体数组、AoS / SoA，以及访问方式与布局的关系。</p><p><a class="read-link" href="{ecs_link}">阅读 ECS 第一篇学习记录</a></p><ul><li>连续数据与分散对象，怎样影响缓存命中与遍历？</li><li>AoS、SoA 与组件数组分别描述什么？</li><li>数据布局带来的收益，为什么不等同于 SIMD 或多线程？</li></ul><p>阅读入口：<a class="read-link" href="https://docs.unity3d.com/Packages/com.unity.entities@1.5/manual/concepts-archetypes.html">Unity Entities 1.5 · Archetype concepts <svg class="outbound-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 12 12 4M4 4h8v8"/></svg></a></p><p>本阶段完成概念阅读与理解检查，尚未做性能对照实验。随后已安装 Entities 1.5.0，并在 Query 实践中完成两次运行。</p></div></section><section class="route-detail" id="route-02"><span class="number">02</span><div><span class="pill reading">Query 概念与基础实践已完成</span><h2>Archetype、Chunk 与查询</h2><p><a class="read-link" href="/2026/10/20/unity-ecs-query-traversal/">阅读 Query 概念记录</a> · <a class="read-link" href="/2026/10/22/unity-ecs-query-practice/">阅读两次 Query 实验记录</a></p><p>已理解分组与迁移，并完成 Query 类型条件、All / Any / None、Chunk 遍历与 RefRO / RefRW 的概念学习。普通字段值更新不改变组件类型组合。</p><ul><li>相同组件组合的实体如何分组与存储？</li><li>Query 如何筛选需要处理的数据？</li><li>添加或删除组件时，结构变化会带来哪些成本？</li></ul></div></section><section class="route-detail" id="route-03"><span class="number">03</span><div><span class="pill">基础学习与汇编观察已完成</span><h2>Burst 与 SIMD</h2><p>原始 IJob 在 Safety Check Off、Target Auto 配置下已观察到 vaddps 与循环展开；这不等于性能提升，也不是 IJobFor 的向量化证据。</p><p><a class="read-link" href="/2026/10/24/unity-burst-simd-jobs/">阅读 Burst 与 Job 实验记录</a></p><ul><li>哪些循环具备向量化条件？哪些写法会阻碍它？</li><li>Burst 编译优化与 SIMD 指令是什么关系？</li><li>怎样用 Burst Inspector 验证，而不是只看代码长相？</li></ul></div></section><section class="route-detail" id="route-04"><span class="number">04</span><div><span class="pill reading">基础调度与依赖实践已完成</span><h2>Job System 与依赖</h2><p><a class="read-link" href="/2026/10/27/unity-job-dependencies/">阅读 Job 依赖与八项位移实验</a></p><p>已跑通 IJob.Run、IJob.Schedule + Complete、IJobFor.ScheduleParallel + Complete；已理解独立索引、数据竞争和归约思路。已完成 A、C 独立调度后汇合到 D 的八项位移实验。实际工作线程数与加速幅度未测量；下一步学习 ECS System 的 Dependency。</p><ul><li>任务如何拆分？读写依赖如何表达？</li><li>什么时候必须同步，什么时候可以继续做别的工作？</li><li>如何区分数据布局、Burst 和多线程各自的贡献？</li></ul></div></section></section>'''
     write('learning/index.html',page('学习路线',body,'/learning/','learning'))
 
 

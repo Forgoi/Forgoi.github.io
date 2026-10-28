@@ -5,6 +5,22 @@
   "repository": "https://github.com/Forgoi/Forgoi.github.io",
   "posts": [
     {
+      "file": "unity-job-dependencies.md",
+      "title": "Unity ECS 学习笔记 05：用 JobHandle 连接任务依赖",
+      "short_title": "连接依赖，让多阶段任务正确衔接",
+      "date": "2026-10-27",
+      "permalink": "/2026/10/27/unity-job-dependencies/",
+      "excerpt": "从 A → B 的任务链，到 A、C 汇合后执行 D，用八项位移实验理清 Schedule、CombineDependencies 与 Complete 的职责和范围。",
+      "tags": [
+        "Job System",
+        "JobHandle",
+        "任务依赖"
+      ],
+      "status": "completed",
+      "read_minutes": 7,
+      "visual": "job-dependencies"
+    },
+    {
       "file": "unity-burst-simd-jobs.md",
       "title": "Unity ECS 学习笔记 04：从 Burst SIMD 到 Job 并行调度",
       "short_title": "看见 SIMD，再理解 Job 并行",
