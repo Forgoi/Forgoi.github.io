@@ -46,11 +46,11 @@ class MarkdownTests(unittest.TestCase):
 class BlogContentTests(unittest.TestCase):
     def test_newest_feature_matches_article(self):
         post = build.SITE['posts'][0]
-        self.assertEqual(post['file'], 'unity-ecs-system-dependency.md')
+        self.assertEqual(post['file'], 'unity-ecs-entity-command-buffer.md')
         content = build.feature(post)
-        self.assertIn('ECS SYSTEM DEPENDENCY', content)
-        self.assertIn('单实体一轮 · 性能未测', content)
-        self.assertIn('PASS · dt=1', content)
+        self.assertIn('ENTITY COMMAND BUFFER', content)
+        self.assertIn('手动与自动回放 · 性能未测', content)
+        self.assertIn('value = 42', content)
         self.assertNotIn('FIXED STEP / EXPERIMENT', content)
 
     def test_learning_links_and_progress(self):
@@ -68,6 +68,17 @@ class BlogContentTests(unittest.TestCase):
         self.assertNotIn('尚未运行 ECS 示例', content)
         self.assertNotIn('Query 是下一步', content)
         self.assertNotIn('ECS 系列刚开始阅读', content)
+
+    def test_ecb_lesson_and_exact_downloads(self):
+        import hashlib
+        article = (build.SOURCE / 'posts' / 'unity-ecs-entity-command-buffer.md').read_text()
+        for term in ['不能证明 Job 已完成记录', '没有单独的 PASS', '没有另行验证', 'ParallelWriter 与 sortKey 只做了理论学习', '同一个 ECB', '开始探索', '0 → 0 → 1']:
+            self.assertIn(term, article)
+        expected = {'EcbPlaybackExperiment.cs': '31b3cf0abae6baf604d47d0f3bc7bdebdca73c4914732a1df00ec1be8e5e06c0', 'AutomaticEcbExperiment.cs': 'ffb7e291441868c76dd3f0d551559fbcf91da5e5020b4ebc569dabdd0d9aee87'}
+        for name, digest in expected.items():
+            source = (build.SOURCE / 'downloads' / name).read_bytes()
+            self.assertEqual(hashlib.sha256(source).hexdigest(), digest)
+            self.assertEqual(source, (build.ROOT / 'downloads' / name).read_bytes())
 
     def test_ecs_dependency_lesson_and_exact_download(self):
         import hashlib

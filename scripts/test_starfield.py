@@ -18,16 +18,24 @@ class StarfieldTests(unittest.TestCase):
         self.assertIn('content="light"',article)
     def test_progress_truth(self):
         home=self.markup()
-        self.assertEqual(home.count('data-order='),7)
+        self.assertEqual(home.count('data-order='),8)
         self.assertEqual(home.count('class="knowledge-star in-progress"'),1)
         self.assertIn('正在探索 · 尚未点亮',home)
         self.assertIn('已点亮：System Dependency',home)
-        self.assertIn('正在探索：ECB 与结构变化',home)
+        self.assertIn('已点亮：ECB 与结构变化',home)
+        self.assertIn('正在探索：ECS 性能底层',home)
+        self.assertNotIn('正在探索：ECB 与结构变化',home)
         self.assertNotIn('正在探索：ECS System Dependency',home)
         for post in build.SITE['posts']:
             self.assertIn(post['permalink'],home)
         self.assertIn('一颗亮星 = 一篇已完成的学习记录',home)
         self.assertNotIn('100%',home)
+    def test_replay_covers_all_stars(self):
+        source = (build.SOURCE/'static'/'starfield.js').read_text()
+        self.assertIn("universe.querySelectorAll('.is-lit').length - 1", source)
+        self.assertIn('* 500 + 1000', source)
+        self.assertIn('}, replayDuration)', source)
+
     def test_accessible_and_nojs(self):
         home=self.markup()
         self.assertIn('id="replay-stars" type="button" hidden',home)

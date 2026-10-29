@@ -5,6 +5,22 @@
   "repository": "https://github.com/Forgoi/Forgoi.github.io",
   "posts": [
     {
+      "file": "unity-ecs-entity-command-buffer.md",
+      "title": "Unity ECS 学习笔记 07：ECB 从记录命令到自动回放",
+      "short_title": "把结构变化安排到合适的时机",
+      "date": "2026-10-29",
+      "permalink": "/2026/10/29/unity-ecs-entity-command-buffer/",
+      "excerpt": "通过手动与自动回放的两次实验，分清记录、Complete、Playback，以及临时实体、缓冲区所有权和生产者依赖。",
+      "tags": [
+        "Unity ECS",
+        "EntityCommandBuffer",
+        "结构变化"
+      ],
+      "status": "completed",
+      "read_minutes": 12,
+      "visual": "ecb"
+    },
+    {
       "file": "unity-ecs-system-dependency.md",
       "title": "Unity ECS 学习笔记 06：System Dependency 怎样连接组件读写",
       "short_title": "把 Job 依赖接进 ECS 的世界",

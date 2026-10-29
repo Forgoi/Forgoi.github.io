@@ -16,9 +16,11 @@
     void universe.offsetWidth;
     universe.classList.add('is-replaying');
     status.textContent = '正在重放已完成记录的点亮过程，学习进度没有改变。';
+    // CSS uses a 500 ms stagger and a 900 ms fade per completed star.
+    const replayDuration = Math.max(0, universe.querySelectorAll('.is-lit').length - 1) * 500 + 1000;
     timer = setTimeout(() => {
       universe.classList.remove('is-replaying');
       status.textContent = '点亮过程重放完毕。' + universe.querySelectorAll('.is-lit').length + ' 篇完成记录已显示，正在探索的主题仍未点亮。';
-    }, 4200);
+    }, replayDuration);
   });
 })();
