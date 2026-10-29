@@ -18,9 +18,12 @@ class StarfieldTests(unittest.TestCase):
         self.assertIn('content="light"',article)
     def test_progress_truth(self):
         home=self.markup()
-        self.assertEqual(home.count('data-order='),6)
+        self.assertEqual(home.count('data-order='),7)
         self.assertEqual(home.count('class="knowledge-star in-progress"'),1)
         self.assertIn('正在探索 · 尚未点亮',home)
+        self.assertIn('已点亮：System Dependency',home)
+        self.assertIn('正在探索：ECB 与结构变化',home)
+        self.assertNotIn('正在探索：ECS System Dependency',home)
         for post in build.SITE['posts']:
             self.assertIn(post['permalink'],home)
         self.assertIn('一颗亮星 = 一篇已完成的学习记录',home)

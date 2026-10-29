@@ -5,6 +5,22 @@
   "repository": "https://github.com/Forgoi/Forgoi.github.io",
   "posts": [
     {
+      "file": "unity-ecs-system-dependency.md",
+      "title": "Unity ECS 学习笔记 06：System Dependency 怎样连接组件读写",
+      "short_title": "把 Job 依赖接进 ECS 的世界",
+      "date": "2026-10-29",
+      "permalink": "/2026/10/29/unity-ecs-system-dependency/",
+      "excerpt": "用一个实体的一轮加速与移动实验，理解 SystemState、组件访问声明和输入输出依赖，再分清系统调用、任务工作量与模拟时间。",
+      "tags": [
+        "Unity ECS",
+        "System Dependency",
+        "IJobEntity"
+      ],
+      "status": "completed",
+      "read_minutes": 12,
+      "visual": "ecs-system-dependency"
+    },
+    {
       "file": "unity-job-dependencies.md",
       "title": "Unity ECS 学习笔记 05：用 JobHandle 连接任务依赖",
       "short_title": "连接依赖，让多阶段任务正确衔接",
